@@ -1,13 +1,14 @@
 import importlib
 import os
-import unittest
 from unittest import mock
 
 import torch
 from vllm.v1.sample.ops import topk_topp_sampler
 
+from tests.ut.base import TestBase
 
-class TestTopKTopPSamplerOptimize(unittest.TestCase):
+
+class TestTopKTopPSamplerOptimize(TestBase):
 
     @mock.patch.dict(os.environ, {"VLLM_ASCEND_ENABLE_TOPK_OPTIMIZE": "1"})
     @mock.patch("torch_npu.npu_top_k_top_p")
