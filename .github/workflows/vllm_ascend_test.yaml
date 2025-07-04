@@ -52,6 +52,11 @@ on:
       - '.github/workflows/actionlint.*'
       - '.github/workflows/matchers/actionlint.json'
 
+# Required to PR body update
+permissions:
+  pull-requests: write
+  contents: write
+
 # Bash shells do not use ~/.profile or ~/.bashrc so these shells need to be explicitly
 # declared as "shell: bash -el {0}" on steps that need to be properly activated.
 # It's used to activate ascend-toolkit environment variables.
@@ -158,9 +163,18 @@ jobs:
           ref: ${{ matrix.vllm_version }}
           path: ./vllm-empty
 
+      - name: Update PR description
+        if: ${{ github.event_name == 'pull_request' && matrix.vllm_version == 'main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash $GITHUB_WORKSPACE/.github/format_pr_body.sh "${{ github.event.number }}" "vLLM: ${{ env.VLLM_COMMIT_URL }}"
+
       - name: Install vllm-project/vllm from source
         working-directory: ./vllm-empty
         run: |
+          VLLM_COMMIT=$(git rev-parse HEAD)
+          echo "VLLM_COMMIT_URL=https://github.com/vllm-project/vllm/commit/$VLLM_COMMIT" >> $GITHUB_ENV
           VLLM_TARGET_DEVICE=empty python3 -m pip install . --extra-index https://download.pytorch.org/whl/cpu/
           python3 -m pip uninstall -y triton
 
